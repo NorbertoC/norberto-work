@@ -63,10 +63,12 @@ const isSceneDragBlockedTarget = (target: EventTarget | null) =>
         "[role='button']",
         "[role='dialog']",
         ".below",
+        ".contact",
         ".hero-copy",
         ".metrics",
         ".site-nav",
         ".terminal",
+        ".work",
       ].join(", "),
     ),
   );
@@ -97,6 +99,8 @@ const disposeScene = (scene: THREE.Scene) => {
   });
 };
 
+const BLOCK_BASE_SPEED = 0.18;
+
 export const createCompilerScene = ({
   canvas,
   getResetSignal,
@@ -107,6 +111,28 @@ export const createCompilerScene = ({
   onScatterStatusChange,
 }: CompilerSceneOptions): CompilerSceneController => {
   const freeSpin = { axisX: 0, axisY: 1, hasManualDirection: false, velocityX: 0, velocityY: 0, x: 0, y: 0 };
+  // Every angle is integrated per-frame from smoothed velocities. Direction or
+  // axis changes (drag wiggles, terminal spin commands) alter velocity only, so
+  // positions stay continuous and the orbit never teleports.
+  const spinState = {
+    blockPhaseH: 0,
+    blockPhaseV: 0,
+    blockRoll: 0,
+    blockTumble: 0,
+    corePitch: 0,
+    coreYaw: 0,
+    curvesPitch: 0,
+    curvesYaw: 0,
+    dirH: 1,
+    dirObject: 1,
+    dirV: 1,
+    particlesPitch: 0,
+    particlesYaw: 0,
+    verticalBlend: 0,
+    wirePitch: 0,
+    wireRoll: 0,
+    wireYaw: 0,
+  };
   const coreWorldPosition = new THREE.Vector3();
   const pointerNdc = new THREE.Vector2();
   const raycaster = new THREE.Raycaster();
@@ -119,6 +145,8 @@ export const createCompilerScene = ({
     velocityX: 0,
     velocityY: 0,
   };
+  const sceneWrapper = canvas.parentElement;
+  let appliedSceneFade = -1;
   const renderer = new THREE.WebGLRenderer({
     alpha: true,
     antialias: false,
@@ -310,7 +338,7 @@ export const createCompilerScene = ({
   };
 
   const updateCoreHover = (event: PointerEvent) => {
-    if (dragState.active || isSceneDragBlockedTarget(event.target) || !isPointerOnCore(event)) {
+    if (dragState.active || appliedSceneFade < 0.5 || isSceneDragBlockedTarget(event.target) || !isPointerOnCore(event)) {
       document.documentElement.removeAttribute("data-scene-hover");
       return;
     }
@@ -330,10 +358,11 @@ export const createCompilerScene = ({
     const deltaMs = Math.max(16, now - dragState.lastAt);
     const deltaX = event.clientX - dragState.lastX;
     const deltaY = event.clientY - dragState.lastY;
+    const horizontalDrag = -deltaX;
 
-    dragState.velocityY = clamp((deltaX / deltaMs) * 1.7, -3.4, 3.4);
+    dragState.velocityY = clamp((horizontalDrag / deltaMs) * 1.7, -3.4, 3.4);
     dragState.velocityX = clamp((deltaY / deltaMs) * 1.5, -3, 3);
-    freeSpin.y += deltaX * 0.0042;
+    freeSpin.y += horizontalDrag * 0.0042;
     freeSpin.x += deltaY * 0.0038;
     const speed = Math.hypot(dragState.velocityX, dragState.velocityY);
     if (speed > 0.04) {
@@ -368,6 +397,7 @@ export const createCompilerScene = ({
     if (
       event.button !== 0 ||
       event.pointerType === "touch" ||
+      appliedSceneFade < 0.5 ||
       isSceneDragBlockedTarget(event.target) ||
       !isPointerOnCore(event)
     ) {
@@ -448,13 +478,28 @@ export const createCompilerScene = ({
     frameId = 0;
 
     const delta = Math.min(clock.getDelta(), 0.05);
+
+    const fadeStart = window.innerHeight * 0.12;
+    const fadeRange = Math.max(1, window.innerHeight * 0.48);
+    const sceneFade = 1 - clamp01((window.scrollY - fadeStart) / fadeRange);
+    if (sceneFade !== appliedSceneFade) {
+      appliedSceneFade = sceneFade;
+      sceneWrapper?.style.setProperty("--scene-scroll-fade", sceneFade.toFixed(3));
+    }
+
+    // Fully faded below the hero: keep polling for scroll-back, skip the work.
+    if (sceneFade <= 0) {
+      startAnimation();
+      return;
+    }
+
     elapsedTime += delta;
     const elapsed = elapsedTime;
     const frameScale = delta * 60;
     const motionScale = reduceMotion ? 0.35 : 1;
     const groupEase = 1 - Math.pow(0.965, frameScale);
     const cameraEase = 1 - Math.pow(0.975, frameScale);
-    const freeSpinDamping = dragState.active ? 1 : Math.pow(0.998, frameScale);
+    const freeSpinDamping = dragState.active ? 1 : Math.pow(0.994, frameScale);
     const rotationMode = getRotationMode();
     const rotationLayerMode = getRotationLayerMode();
     const scatterSignal = getScatterSignal();
@@ -469,6 +514,10 @@ export const createCompilerScene = ({
 
       freeSpin.x += freeSpin.velocityX * delta;
       freeSpin.y += freeSpin.velocityY * delta;
+
+      if (freeSpin.hasManualDirection && freeSpin.velocityX === 0 && freeSpin.velocityY === 0) {
+        freeSpin.hasManualDirection = false;
+      }
     }
 
     mainGroup.rotation.y += (0 - mainGroup.rotation.y) * groupEase;
@@ -480,17 +529,21 @@ export const createCompilerScene = ({
     const objectDirection = rotationMode.direction * rotationLayerMode.objectMultiplier;
     const verticalSpin = rotationMode.axis === "x";
     const manualDirection = freeSpin.hasManualDirection;
-    const defaultHorizontalWeight = verticalSpin ? 0 : 1;
-    const defaultVerticalWeight = verticalSpin ? 1 : 0;
-    const horizontalWeight = manualDirection ? Math.abs(freeSpin.axisY) : defaultHorizontalWeight;
-    const verticalWeight = manualDirection ? Math.abs(freeSpin.axisX) : defaultVerticalWeight;
-    const orbitWeightTotal = Math.max(0.001, horizontalWeight + verticalWeight);
-    const horizontalOrbitWeight = horizontalWeight / orbitWeightTotal;
-    const verticalOrbitWeight = verticalWeight / orbitWeightTotal;
-    const horizontalOrbitDirection =
-      manualDirection && freeSpin.axisY !== 0 ? Math.sign(freeSpin.axisY) : orbitDirection;
-    const verticalOrbitDirection =
-      manualDirection && freeSpin.axisX !== 0 ? Math.sign(freeSpin.axisX) : orbitDirection;
+    const manualWeightTotal = Math.max(0.001, Math.abs(freeSpin.axisX) + Math.abs(freeSpin.axisY));
+    const targetVerticalBlend = manualDirection
+      ? Math.abs(freeSpin.axisX) / manualWeightTotal
+      : verticalSpin
+        ? 1
+        : 0;
+    const targetDirH = manualDirection && freeSpin.axisY !== 0 ? Math.sign(freeSpin.axisY) : orbitDirection;
+    const targetDirV = manualDirection && freeSpin.axisX !== 0 ? Math.sign(freeSpin.axisX) : orbitDirection;
+    const spinEase = 1 - Math.pow(0.94, frameScale);
+    spinState.verticalBlend += (targetVerticalBlend - spinState.verticalBlend) * spinEase;
+    spinState.dirH += (targetDirH - spinState.dirH) * spinEase;
+    spinState.dirV += (targetDirV - spinState.dirV) * spinEase;
+    spinState.dirObject += (objectDirection - spinState.dirObject) * spinEase;
+    const verticalShare = spinState.verticalBlend;
+    const horizontalShare = 1 - verticalShare;
 
     if (cubeScatter.trigger !== scatterSignal.id) {
       cubeScatter.trigger = scatterSignal.id;
@@ -511,40 +564,39 @@ export const createCompilerScene = ({
 
     if (!scatterActive) setScatterStatus("idle");
 
-    if (verticalSpin || manualDirection) {
-      core.rotation.x = elapsed * 0.24 * (manualDirection ? verticalOrbitDirection : objectDirection);
-      core.rotation.y = manualDirection
-        ? elapsed * 0.2 * horizontalOrbitDirection
-        : Math.sin(elapsed * 0.4) * 0.16;
-      wire.rotation.x = -elapsed * 0.18 * (manualDirection ? verticalOrbitDirection : objectDirection);
-      wire.rotation.y = manualDirection ? elapsed * 0.14 * horizontalOrbitDirection : wire.rotation.y;
-      wire.rotation.z = elapsed * 0.12 * objectDirection;
-    } else {
-      core.rotation.y = elapsed * 0.24 * objectDirection;
-      core.rotation.x = Math.sin(elapsed * 0.4) * 0.16;
-      wire.rotation.y = -elapsed * 0.18 * objectDirection;
-      wire.rotation.z = elapsed * 0.12 * objectDirection;
-    }
+    spinState.coreYaw += 0.24 * spinState.dirObject * horizontalShare * delta;
+    spinState.corePitch += 0.24 * spinState.dirV * verticalShare * delta;
+    spinState.wireYaw += -0.18 * spinState.dirObject * horizontalShare * delta;
+    spinState.wirePitch += -0.18 * spinState.dirV * verticalShare * delta;
+    spinState.wireRoll += 0.12 * spinState.dirObject * delta;
+    core.rotation.y = spinState.coreYaw + Math.sin(elapsed * 0.4) * 0.16 * verticalShare;
+    core.rotation.x = spinState.corePitch + Math.sin(elapsed * 0.4) * 0.16 * horizontalShare;
+    wire.rotation.y = spinState.wireYaw;
+    wire.rotation.x = spinState.wirePitch;
+    wire.rotation.z = spinState.wireRoll;
 
     rings.forEach((ring, index) => {
-      if (verticalSpin || manualDirection) {
-        ring.rotation.x += (0.003 + index * 0.0005) * verticalOrbitDirection * verticalOrbitWeight * frameScale;
-        ring.rotation.y +=
-          ((0.003 + index * 0.0005) * horizontalOrbitDirection * horizontalOrbitWeight + 0.0012) * frameScale;
-      } else {
-        ring.rotation.x += (0.0024 + index * 0.0004) * frameScale;
-        ring.rotation.y += (0.003 + index * 0.0005) * orbitDirection * frameScale;
-      }
+      const ringRate = 0.003 + index * 0.0005;
+      ring.rotation.x += (ringRate * spinState.dirV * verticalShare + 0.0018) * frameScale;
+      ring.rotation.y += (ringRate * spinState.dirH * horizontalShare + 0.0012) * frameScale;
     });
 
-    if (scatterActive || elapsed - lastBlockUpdate >= (reduceMotion ? 1 / 18 : 1 / 30)) {
+    spinState.blockPhaseH += BLOCK_BASE_SPEED * spinState.dirH * motionScale * delta;
+    spinState.blockPhaseV += BLOCK_BASE_SPEED * spinState.dirV * motionScale * delta;
+    spinState.blockTumble += 0.3 * spinState.dirObject * delta;
+    spinState.blockRoll += 0.22 * spinState.dirObject * delta;
+
+    const inertiaSpeed = Math.hypot(freeSpin.velocityX, freeSpin.velocityY);
+    const blocksAtFullRate = scatterActive || dragState.active || inertiaSpeed > 0.3;
+
+    if (blocksAtFullRate || elapsed - lastBlockUpdate >= (reduceMotion ? 1 / 18 : 1 / 30)) {
       lastBlockUpdate = elapsed;
 
       for (let index = 0; index < blockCount; index += 1) {
         const data = blockData[index];
-        const baseSpeed = 0.18 + data.strand * 0.018;
-        const horizontalAngle = data.angle + elapsed * baseSpeed * horizontalOrbitDirection * motionScale + freeSpin.y;
-        const verticalAngle = data.angle + elapsed * baseSpeed * verticalOrbitDirection * motionScale + freeSpin.x;
+        const speedRatio = 1 + data.strand * 0.1;
+        const horizontalAngle = data.angle + spinState.blockPhaseH * speedRatio + freeSpin.y;
+        const verticalAngle = data.angle + spinState.blockPhaseV * speedRatio + freeSpin.x;
         const radius = data.radius + Math.sin(elapsed * 1.2 * motionScale + index) * 0.04;
         const horizontalX = Math.cos(horizontalAngle) * radius + 1.65;
         const horizontalY = data.y + Math.sin(elapsed * 0.9 * motionScale + index * 0.2) * 0.08;
@@ -552,9 +604,9 @@ export const createCompilerScene = ({
         const verticalX = data.y * 0.58 + 1.65;
         const verticalY = Math.cos(verticalAngle) * radius * 0.72 + Math.sin(elapsed * 0.9 * motionScale + index * 0.2) * 0.06;
         const verticalZ = Math.sin(verticalAngle) * radius;
-        const orbitX = horizontalX * horizontalOrbitWeight + verticalX * verticalOrbitWeight;
-        const orbitY = horizontalY * horizontalOrbitWeight + verticalY * verticalOrbitWeight;
-        const orbitZ = horizontalZ * horizontalOrbitWeight + verticalZ * verticalOrbitWeight;
+        const orbitX = horizontalX * horizontalShare + verticalX * verticalShare;
+        const orbitY = horizontalY * horizontalShare + verticalY * verticalShare;
+        const orbitZ = horizontalZ * horizontalShare + verticalZ * verticalShare;
         const delayedProgress = clamp01((scatterBaseProgress - data.scatterDelay) / 0.82);
         const outProgress = easeOutCubic(clamp01(delayedProgress / 0.22));
         const returnProgress = easeInOutCubic(clamp01((delayedProgress - 0.22) / 0.78));
@@ -566,9 +618,9 @@ export const createCompilerScene = ({
 
         dummy.position.set(x, y, z);
         dummy.rotation.set(
-          verticalAngle + elapsed * (0.3 + scatterAmount * 1.9) * objectDirection,
+          verticalAngle + spinState.blockTumble * (1 + scatterAmount * 6),
           horizontalAngle * 0.35 + scatterAmount * Math.PI * 1.2,
-          elapsed * (0.22 + scatterAmount * 1.4) * objectDirection,
+          spinState.blockRoll * (1 + scatterAmount * 6),
         );
         dummy.scale.setScalar(data.scale * (1 + Math.sin(elapsed * 1.6 * motionScale + index) * 0.06 + scatterAmount * 0.16));
         dummy.updateMatrix();
@@ -577,21 +629,14 @@ export const createCompilerScene = ({
       blocks.instanceMatrix.needsUpdate = true;
     }
 
-    if (verticalSpin || manualDirection) {
-      particles.rotation.x = (elapsed * 0.018 * verticalOrbitDirection + freeSpin.x * 0.06) * verticalOrbitWeight;
-      particles.rotation.y =
-        (elapsed * 0.018 * horizontalOrbitDirection + freeSpin.y * 0.06) * horizontalOrbitWeight +
-        Math.sin(elapsed * 0.2) * 0.04;
-      curves.rotation.x = (-elapsed * 0.045 * verticalOrbitDirection - freeSpin.x * 0.08) * verticalOrbitWeight;
-      curves.rotation.y =
-        (-elapsed * 0.045 * horizontalOrbitDirection - freeSpin.y * 0.08) * horizontalOrbitWeight +
-        Math.sin(elapsed * 0.18) * 0.035;
-    } else {
-      particles.rotation.y = elapsed * 0.018 * orbitDirection;
-      particles.rotation.x = Math.sin(elapsed * 0.2) * 0.04;
-      curves.rotation.y = -elapsed * 0.045 * orbitDirection;
-      curves.rotation.x = Math.sin(elapsed * 0.18) * 0.02;
-    }
+    spinState.particlesYaw += 0.018 * spinState.dirH * horizontalShare * delta;
+    spinState.particlesPitch += 0.018 * spinState.dirV * verticalShare * delta;
+    spinState.curvesYaw += -0.045 * spinState.dirH * horizontalShare * delta;
+    spinState.curvesPitch += -0.045 * spinState.dirV * verticalShare * delta;
+    particles.rotation.y = spinState.particlesYaw + freeSpin.y * 0.06 * horizontalShare + Math.sin(elapsed * 0.2) * 0.04;
+    particles.rotation.x = spinState.particlesPitch + freeSpin.x * 0.06 * verticalShare;
+    curves.rotation.y = spinState.curvesYaw - freeSpin.y * 0.08 * horizontalShare + Math.sin(elapsed * 0.18) * 0.035;
+    curves.rotation.x = spinState.curvesPitch - freeSpin.x * 0.08 * verticalShare + Math.sin(elapsed * 0.18) * 0.02;
 
     camera.position.x += (0 - camera.position.x) * cameraEase;
     camera.position.y += (0.28 - camera.position.y) * cameraEase;

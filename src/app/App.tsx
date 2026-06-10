@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ButtonLink } from "../components/ButtonLink";
 import { CommandTerminal, type CommandLine, type CommandLineTone } from "../components/CommandTerminal";
+import { ContactSection } from "../components/ContactSection";
 import { MethodSection } from "../components/MethodSection";
 import { SiteNav } from "../components/SiteNav";
 import { TerminalPreview } from "../components/TerminalPreview";
 import { ThreeBackdrop } from "../components/ThreeBackdrop";
 import { Toast } from "../components/Toast";
-import { capabilities, heroContent, metrics } from "../content/site-content";
+import { WorkSection } from "../components/WorkSection";
+import { capabilities, contactEmail, heroContent, metrics } from "../content/site-content";
 import { useTheme } from "../design-system/ThemeProvider";
 import { useToast } from "../hooks/use-toast";
 import { runTerminalCommand, type TerminalCommandEffect } from "../terminal/command-engine";
@@ -186,6 +188,15 @@ export function App() {
     setOrbitActive(status === "active");
   }, []);
 
+  const handleCopyEmail = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(contactEmail);
+      showToast("Email copied to clipboard.");
+    } catch {
+      showToast(`Email: ${contactEmail}`);
+    }
+  }, [showToast]);
+
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       setTerminalAnimationRun((current) => current + 1);
@@ -283,6 +294,7 @@ export function App() {
               {heroContent.headline} <span className="gradient-text">{heroContent.highlightedHeadline}</span>
             </h1>
             <p className="hero-text">{heroContent.body}</p>
+            <p className="hero-meta">{heroContent.meta}</p>
             <div className="hero-actions">
               <ButtonLink href={heroContent.primaryAction.href} variant="primary">
                 {heroContent.primaryAction.label}
@@ -320,7 +332,9 @@ export function App() {
           </aside>
         </main>
 
+        <WorkSection />
         <MethodSection />
+        <ContactSection onCopyEmail={() => void handleCopyEmail()} />
       </div>
 
       <CommandTerminal

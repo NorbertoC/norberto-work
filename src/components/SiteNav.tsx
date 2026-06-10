@@ -19,6 +19,7 @@ export function SiteNav({ onBreakOrbit, onToggleTheme, orbitActive, theme }: Sit
       <div className="nav-links">
         <a href="#work">Work</a>
         <a href="#method">Method</a>
+        <a href="#contact">Contact</a>
         <button
           className="nav-action"
           type="button"
@@ -29,9 +30,9 @@ export function SiteNav({ onBreakOrbit, onToggleTheme, orbitActive, theme }: Sit
           {orbitActive ? "Restore Orbit" : "Break Orbit"}
         </button>
         <ThemeToggle onToggle={onToggleTheme} theme={theme} />
-        <a className="availability" href={heroContent.availability.href}>
-          <i aria-hidden="true" />
-          {heroContent.availability.label}
+        <a className="nav-external" href={heroContent.github.href} rel="noreferrer" target="_blank">
+          {heroContent.github.label}
+          <span aria-hidden="true"> ↗</span>
         </a>
       </div>
     </nav>

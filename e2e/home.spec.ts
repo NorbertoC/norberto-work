@@ -8,14 +8,18 @@ test("home page presents the professional landing page", async ({ page }) => {
 
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "Interfaces for products that need precision." })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "I build precise, production-ready interfaces for product teams." }),
+  ).toBeVisible();
   await expect(page.getByRole("link", { name: "Norberto Carosella" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Start a project conversation" })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Get in touch" }).first()).toHaveAttribute(
     "href",
     "mailto:norberto.carosella@gmail.com",
   );
-  await expect(page.getByText("React + TypeScript")).toBeVisible();
+  await expect(page.getByText("React + TypeScript, end to end")).toBeVisible();
+  await expect(page.getByText("Real products, real constraints.")).toBeVisible();
   await expect(page.getByText("Start with the workflow, not the component.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy email address" })).toBeVisible();
 
   expect(consoleErrors).toEqual([]);
 });

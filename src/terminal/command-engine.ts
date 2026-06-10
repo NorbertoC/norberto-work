@@ -168,7 +168,7 @@ export const runTerminalCommand = (rawValue: string, state: TerminalCommandState
 
   const staticOutputs: Record<string, string> = {
     about:
-      "Norberto Carosella: frontend/product engineer focused on complex interfaces, dense workflows, and typed React systems.",
+      "Norberto Carosella: frontend engineer building precise, production-ready React + TypeScript interfaces for product teams. Based in Auckland, New Zealand.",
     contact: "Email: norberto.carosella@gmail.com",
     help: helpOutput,
     shortcuts: shortcutsOutput,
