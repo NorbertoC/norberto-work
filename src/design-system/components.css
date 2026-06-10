@@ -1,0 +1,93 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 0 18px;
+  background: var(--surface-panel);
+  color: var(--color-paper);
+  font-size: 13px;
+  font-weight: 760;
+  backdrop-filter: blur(14px);
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
+}
+
+.button:hover,
+.button:focus-visible {
+  border-color: rgba(245, 247, 242, 0.28);
+  transform: translateY(-1px);
+}
+
+.button--primary {
+  border-color: rgba(114, 212, 142, 0.34);
+  background: rgba(114, 212, 142, 0.1);
+  box-shadow: var(--shadow-green);
+}
+
+.chip {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 8px 11px;
+  background: rgba(245, 247, 242, 0.035);
+  color: var(--color-paper-soft);
+  font-size: 12px;
+}
+
+.glass-panel {
+  border: 1px solid var(--border-subtle);
+  background:
+    linear-gradient(180deg, rgba(245, 247, 242, 0.055), transparent 40%),
+    var(--surface-glass);
+  box-shadow:
+    var(--shadow-soft),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 0 10px;
+  background: var(--surface-panel);
+  color: var(--color-paper-muted);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-green);
+  color: var(--color-paper);
+  transform: translateY(-1px);
+}
+
+.theme-toggle__icon {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+
+:root[data-theme="dark"] .theme-toggle__icon {
+  box-shadow: inset -4px 0 0 currentColor;
+}
+
+:root[data-theme="light"] .theme-toggle__icon {
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 16%, transparent);
+}

@@ -1,0 +1,139 @@
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-ink-950: #080c0b;
+  --color-ink-900: #0d1312;
+  --color-ink-800: #111816;
+  --color-ink-700: #18221f;
+  --color-paper: #f5f7f2;
+  --color-paper-muted: rgba(245, 247, 242, 0.66);
+  --color-paper-soft: rgba(245, 247, 242, 0.44);
+  --color-paper-faint: rgba(245, 247, 242, 0.12);
+
+  --color-green-400: #72d48e;
+  --color-green-500: #48be72;
+  --color-blue-400: #6aa7f2;
+  --color-violet-400: #9f86ff;
+  --color-amber-400: #e2ad6d;
+  --color-coral-400: #e07070;
+
+  --surface-glass: rgba(8, 12, 11, 0.74);
+  --surface-glass-strong: rgba(7, 11, 10, 0.92);
+  --surface-panel: rgba(245, 247, 242, 0.04);
+  --surface-panel-strong: rgba(245, 247, 242, 0.07);
+  --border-subtle: rgba(245, 247, 242, 0.14);
+  --border-strong: rgba(245, 247, 242, 0.22);
+
+  --shadow-soft: 0 34px 120px rgba(0, 0, 0, 0.38);
+  --shadow-panel: 0 36px 140px rgba(0, 0, 0, 0.56);
+  --shadow-green: 0 0 36px rgba(114, 212, 142, 0.1);
+  --shadow-blue: 0 0 28px rgba(106, 167, 242, 0.12);
+
+  --page-background:
+    radial-gradient(circle at 76% 18%, rgba(114, 212, 142, 0.18), transparent 30vw),
+    radial-gradient(circle at 18% 86%, rgba(106, 167, 242, 0.16), transparent 34vw),
+    linear-gradient(135deg, #080c0b 0%, #111816 48%, #080b0b 100%);
+  --page-grid-line: rgba(245, 247, 242, 0.035);
+  --page-scan-line: rgba(255, 255, 255, 0.025);
+  --page-vignette: rgba(0, 0, 0, 0.42);
+  --scene-overlay:
+    linear-gradient(
+      90deg,
+      rgba(8, 12, 11, 0.94) 0%,
+      rgba(8, 12, 11, 0.74) 36%,
+      rgba(8, 12, 11, 0.2) 68%,
+      transparent 100%
+    ),
+    linear-gradient(180deg, transparent 58%, rgba(8, 12, 11, 0.64) 100%);
+  --scene-overlay-mobile:
+    linear-gradient(180deg, rgba(8, 12, 11, 0.84), rgba(8, 12, 11, 0.44) 48%, rgba(8, 12, 11, 0.78) 100%),
+    linear-gradient(90deg, rgba(8, 12, 11, 0.72), transparent 88%);
+  --panel-cell: rgba(8, 12, 11, 0.62);
+  --section-cell: rgba(8, 12, 11, 0.76);
+  --focus-ring: rgba(114, 212, 142, 0.72);
+  --selection-background: rgba(114, 212, 142, 0.3);
+
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  --radius-xs: 10px;
+  --radius-sm: 14px;
+  --radius-md: 18px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 140ms;
+  --duration-normal: 180ms;
+  --duration-slow: 560ms;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-ink-950: #f5f8f2;
+  --color-ink-900: #edf3eb;
+  --color-ink-800: #dbe6dd;
+  --color-ink-700: #cbd9cf;
+  --color-paper: #111a16;
+  --color-paper-muted: rgba(17, 26, 22, 0.68);
+  --color-paper-soft: rgba(17, 26, 22, 0.5);
+  --color-paper-faint: rgba(17, 26, 22, 0.12);
+
+  --color-green-400: #147c45;
+  --color-green-500: #0f6d3a;
+  --color-blue-400: #2367b1;
+  --color-violet-400: #6950c9;
+  --color-amber-400: #a0662f;
+  --color-coral-400: #c95d55;
+
+  --surface-glass: rgba(249, 252, 248, 0.78);
+  --surface-glass-strong: rgba(249, 252, 248, 0.94);
+  --surface-panel: rgba(17, 26, 22, 0.045);
+  --surface-panel-strong: rgba(17, 26, 22, 0.075);
+  --border-subtle: rgba(17, 26, 22, 0.14);
+  --border-strong: rgba(17, 26, 22, 0.24);
+
+  --shadow-soft: 0 28px 100px rgba(21, 45, 34, 0.16);
+  --shadow-panel: 0 32px 120px rgba(21, 45, 34, 0.18);
+  --shadow-green: 0 0 34px rgba(20, 124, 69, 0.12);
+  --shadow-blue: 0 0 28px rgba(35, 103, 177, 0.12);
+
+  --page-background:
+    radial-gradient(circle at 76% 18%, rgba(20, 124, 69, 0.16), transparent 30vw),
+    radial-gradient(circle at 18% 86%, rgba(35, 103, 177, 0.14), transparent 34vw),
+    linear-gradient(135deg, #f5f8f2 0%, #edf3eb 52%, #dce8df 100%);
+  --page-grid-line: rgba(17, 26, 22, 0.06);
+  --page-scan-line: rgba(17, 26, 22, 0.02);
+  --page-vignette: rgba(255, 255, 255, 0.14);
+  --scene-overlay:
+    linear-gradient(
+      90deg,
+      rgba(245, 248, 242, 0.94) 0%,
+      rgba(245, 248, 242, 0.74) 36%,
+      rgba(245, 248, 242, 0.3) 68%,
+      transparent 100%
+    ),
+    linear-gradient(180deg, transparent 58%, rgba(245, 248, 242, 0.74) 100%);
+  --scene-overlay-mobile:
+    linear-gradient(180deg, rgba(245, 248, 242, 0.86), rgba(245, 248, 242, 0.52) 48%, rgba(245, 248, 242, 0.8) 100%),
+    linear-gradient(90deg, rgba(245, 248, 242, 0.7), transparent 88%);
+  --panel-cell: rgba(249, 252, 248, 0.72);
+  --section-cell: rgba(249, 252, 248, 0.78);
+  --focus-ring: rgba(20, 124, 69, 0.72);
+  --selection-background: rgba(20, 124, 69, 0.22);
+}
