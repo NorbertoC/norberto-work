@@ -25,6 +25,8 @@ const initialCommandLines: CommandLine[] = [
   { id: 2, text: "Type help, or use shortcuts: g then h/m/w/c. Esc closes this terminal.", tone: "system" },
 ];
 
+const TERMINAL_PREVIEW_REPLAY_INTERVAL_MS = 30_000;
+
 const scrollToSection = (selector: string, label: string) => {
   const target = document.querySelector(selector);
   if (!target) return `${label} is not available yet.`;
@@ -180,10 +182,14 @@ export function App() {
     triggerCubeScatter(11.5, "nav");
   }, [orbitActive, resetCubeScatter, triggerCubeScatter]);
 
+  const handleScatterStatusChange = useCallback((status: "active" | "idle") => {
+    setOrbitActive(status === "active");
+  }, []);
+
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       setTerminalAnimationRun((current) => current + 1);
-    }, 6800);
+    }, TERMINAL_PREVIEW_REPLAY_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
   }, []);
@@ -262,7 +268,7 @@ export function App() {
     <>
       <div className="page" id="page">
         <ThreeBackdrop
-          onScatterStatusChange={(status) => setOrbitActive(status === "active")}
+          onScatterStatusChange={handleScatterStatusChange}
           resetSignal={resetSignal}
           rotationLayerMode={rotationLayerMode}
           rotationMode={rotationMode}

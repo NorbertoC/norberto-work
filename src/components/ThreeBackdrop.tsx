@@ -17,12 +17,12 @@ export function ThreeBackdrop({
   scatterSignal,
 }: ThreeBackdropProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef({ resetSignal, rotationLayerMode, rotationMode, scatterSignal });
+  const stateRef = useRef({ onScatterStatusChange, resetSignal, rotationLayerMode, rotationMode, scatterSignal });
   const [sceneStatus, setSceneStatus] = useState<"loading" | "ready" | "failed">("loading");
 
   useEffect(() => {
-    stateRef.current = { resetSignal, rotationLayerMode, rotationMode, scatterSignal };
-  }, [resetSignal, rotationLayerMode, rotationMode, scatterSignal]);
+    stateRef.current = { onScatterStatusChange, resetSignal, rotationLayerMode, rotationMode, scatterSignal };
+  }, [onScatterStatusChange, resetSignal, rotationLayerMode, rotationMode, scatterSignal]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -43,7 +43,7 @@ export function ThreeBackdrop({
           getRotationMode: () => stateRef.current.rotationMode,
           getScatterSignal: () => stateRef.current.scatterSignal,
           onReady: () => setSceneStatus("ready"),
-          onScatterStatusChange,
+          onScatterStatusChange: (status) => stateRef.current.onScatterStatusChange(status),
         });
         cleanup = controller.destroy;
       } catch (error) {
@@ -58,7 +58,7 @@ export function ThreeBackdrop({
       cancelled = true;
       cleanup?.();
     };
-  }, [onScatterStatusChange]);
+  }, []);
 
   return (
     <>

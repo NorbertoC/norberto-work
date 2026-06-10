@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_THEME, THEME_STORAGE_KEY, getNextTheme, getStoredTheme, isThemeName } from "./theme";
 
 describe("theme helpers", () => {
-  it("defaults to dark mode", () => {
-    expect(DEFAULT_THEME).toBe("dark");
+  it("defaults to light mode", () => {
+    expect(DEFAULT_THEME).toBe("light");
   });
 
   it("validates supported theme names", () => {

@@ -23,9 +23,8 @@ test("home page presents the professional landing page", async ({ page }) => {
 test("theme toggle switches between dark and light mode", async ({ page }) => {
   await page.goto("/");
 
+  await page.getByRole("button", { name: "Switch to dark mode" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.getByRole("button", { name: "Switch to light mode" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await page.getByRole("button", { name: "Switch to dark mode" }).click();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 });

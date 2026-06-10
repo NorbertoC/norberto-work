@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { terminalLines } from "../content/site-content";
 
@@ -51,8 +51,17 @@ export function TerminalPreview({
   onTooltipChange,
   restarting,
 }: TerminalPreviewProps) {
+  const lineAnimationName = animationRun % 2 === 0 ? "lineIn" : "lineInAlt";
+  const tooltipVisibleRef = useRef(false);
+
+  const hideTooltip = useCallback(() => {
+    if (!tooltipVisibleRef.current) return;
+
+    tooltipVisibleRef.current = false;
+    onTooltipChange({ label: "", visible: false, x: 0, y: 0 });
+  }, [onTooltipChange]);
+
   useEffect(() => {
-    const hideTooltip = () => onTooltipChange({ label: "", visible: false, x: 0, y: 0 });
     window.addEventListener("resize", hideTooltip);
     window.addEventListener("scroll", hideTooltip, { passive: true });
 
@@ -60,11 +69,12 @@ export function TerminalPreview({
       window.removeEventListener("resize", hideTooltip);
       window.removeEventListener("scroll", hideTooltip);
     };
-  }, [onTooltipChange]);
+  }, [hideTooltip]);
 
   const showTooltip = (label: string, target: EventTarget | null) => {
     if (!(target instanceof HTMLElement)) return;
     const rect = target.getBoundingClientRect();
+    tooltipVisibleRef.current = true;
     onTooltipChange({
       label,
       visible: true,
@@ -72,8 +82,6 @@ export function TerminalPreview({
       y: rect.bottom + 8,
     });
   };
-
-  const hideTooltip = () => onTooltipChange({ label: "", visible: false, x: 0, y: 0 });
 
   const handleReset = () => {
     hideTooltip();
@@ -133,9 +141,13 @@ export function TerminalPreview({
           </button>
         </div>
       </div>
-      <div className="terminal-body" key={animationRun}>
+      <div className="terminal-body">
         {terminalLines.map((line, index) => (
-          <div className="terminal-line" style={{ "--i": index + 1 } as CSSProperties} key={line.marker}>
+          <div
+            className="terminal-line"
+            style={{ "--i": index + 1, animationName: lineAnimationName } as CSSProperties}
+            key={line.marker}
+          >
             <span>{line.marker}</span>
             <span>{renderLineText(line)}</span>
           </div>
